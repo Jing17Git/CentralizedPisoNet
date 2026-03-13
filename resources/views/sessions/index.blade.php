@@ -492,9 +492,6 @@
 @section('content')
 <div class="page-header">
     <div class="page-title">Session <span>Monitoring</span></div>
-    <div style="display: flex; align-items: center; gap: 16px;">
-        <div class="live-indicator">LIVE MONITORING</div>
-    </div>
 </div>
 
 <!-- Success/Error Messages -->

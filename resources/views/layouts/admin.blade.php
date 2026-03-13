@@ -485,15 +485,12 @@
   <div class="topbar-title">
     @yield('title', 'Dashboard') <span>Overview</span>
   </div>
-  <div class="live-dot">LIVE</div>
   <div class="search-bar">
     <span class="search-icon">🔍</span>
     <input type="text" placeholder="Search machines, users…">
   </div>
   <div class="topbar-actions">
-    <div class="icon-btn">🔔<span class="notif-dot"></span></div>
-    <div class="icon-btn">📥</div>
-    <div class="top-avatar">JD</div>
+    <div class="top-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</div>
   </div>
 </header>
 

@@ -76,8 +76,8 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-// Redirect root to dashboard (will require auth later)
+// Redirect root to welcome page
 Route::get('/', function () {
-    return redirect()->route('login');
+    return view('welcome');
 })->name('home');
 
