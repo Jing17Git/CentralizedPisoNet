@@ -45,6 +45,18 @@ class Session extends Model
         ];
     }
 
+    public function machine()
+    {
+        return $this->belongsTo(Machine::class, 'pc_unit_number', 'machine_code');
+    }
+
+    public function getMinutesUsedAttribute()
+    {
+        if (!$this->start_time) return 0;
+        $endTime = $this->end_time ?? now();
+        return $this->start_time->diffInMinutes($endTime);
+    }
+
     /**
      * Scope for active sessions.
      */

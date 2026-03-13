@@ -33,9 +33,9 @@
     <a href="{{ route('coininserts.index') }}" class="nav-item {{ Route::is('coininserts.index') ? 'active' : '' }}">
       <span class="nav-icon">🪙</span> Coin Inserts
     </a>
-    <div class="nav-item">
+    <a href="{{ route('reports.index') }}" class="nav-item {{ Route::is('reports.*') ? 'active' : '' }}">
       <span class="nav-icon">📊</span> Reports
-    </div>
+    </a>
   </div>
 
   

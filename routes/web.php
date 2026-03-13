@@ -9,6 +9,7 @@ use App\Http\Controllers\SessionController;
 
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\CoinInsertController;
+use App\Http\Controllers\ReportController;
 
 // Public routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -73,6 +74,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/coin-inserts', [CoinInsertController::class, 'store'])->name('coininserts.store');
         Route::get('/admin/coin-inserts/export/pdf', [CoinInsertController::class, 'exportPDF'])->name('coininserts.export.pdf');
         Route::get('/admin/coin-inserts/export/excel', [CoinInsertController::class, 'exportExcel'])->name('coininserts.export.excel');
+        
+        // Reports routes
+        Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/admin/reports/earnings', [ReportController::class, 'earnings'])->name('reports.earnings');
+        Route::get('/admin/reports/machines', [ReportController::class, 'machines'])->name('reports.machines');
+        Route::get('/admin/reports/sessions', [ReportController::class, 'sessions'])->name('reports.sessions');
     });
 });
 
