@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Transactions Report - PisoNet Central</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 12px;
+            color: #333;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #00c8ff;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #040c18;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 12px;
+            color: #666;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            margin-right: 10px;
+        }
+        .info-box:last-child {
+            margin-right: 0;
+        }
+        .info-box label {
+            display: block;
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .info-box .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #040c18;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background: #040c18;
+            color: #fff;
+            padding: 12px 8px;
+            text-align: left;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .amount {
+            font-weight: bold;
+            color: #00a854;
+        }
+        .minutes {
+            font-weight: bold;
+            color: #fa8c16;
+        }
+        .status {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .status-completed {
+            background: #d9f7be;
+            color: #389e0d;
+        }
+        .status-active {
+            background: #e6f7ff;
+            color: #096dd9;
+        }
+        .status-cancelled {
+            background: #ffccc7;
+            color: #cf1322;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PisoNet Central</h1>
+        <p>Transactions Report - {{ ucfirst($filter) }}</p>
+    </div>
+
+    <div class="info-row">
+        <div class="info-box">
+            <label>Total Income</label>
+            <div class="value">₱{{ number_format($totalCoins, 2) }}</div>
+        </div>
+        <div class="info-box">
+            <label>Total Minutes</label>
+            <div class="value">{{ number_format($totalMinutes) }} min</div>
+        </div>
+        <div class="info-box">
+            <label>Generated At</label>
+            <div class="value" style="font-size: 14px;">{{ $generatedAt }}</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Transaction ID</th>
+                <th>PC Unit ID</th>
+                <th>Total Coins</th>
+                <th>Total Minutes</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Transaction Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($transactions as $transaction)
+            <tr>
+                <td>{{ $transaction->transaction_id }}</td>
+                <td>{{ $transaction->pc_unit_id }}</td>
+                <td class="amount">₱{{ number_format($transaction->total_coins, 2) }}</td>
+                <td class="minutes">{{ $transaction->total_minutes }} min</td>
+                <td>{{ $transaction->start_time ? $transaction->start_time->format('M d, Y H:i:s') : '-' }}</td>
+                <td>{{ $transaction->end_time ? $transaction->end_time->format('M d, Y H:i:s') : '-' }}</td>
+                <td>{{ $transaction->transaction_date->format('M d, Y') }}</td>
+                <td>
+                    <span class="status status-{{ $transaction->status }}">
+                        {{ ucfirst($transaction->status) }}
+                    </span>
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>This report was automatically generated by PisoNet Central System</p>
+    </div>
+</body>
+</html>
+
