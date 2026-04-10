@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | API Token
+    |--------------------------------------------------------------------------
+    |
+    | This token is used to authenticate API requests from external machines.
+    | Set this in your .env file and keep it secure.
+    |
+    */
+
+    'api_token' => env('APP_API_TOKEN', 'default_insecure_token'),
+
 ];

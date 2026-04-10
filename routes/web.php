@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PcUnitController;
 use App\Http\Controllers\SessionController;
@@ -42,11 +41,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('admin.profile.edit');
         Route::put('/admin/profile/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('admin.profile.update');
         
-        // Earnings routes
-        Route::get('/admin/earnings', [EarningsController::class, 'index'])->name('earnings.index');
-        Route::get('/admin/earnings/export/pdf', [EarningsController::class, 'exportPDF'])->name('earnings.export.pdf');
-        Route::get('/admin/earnings/export/excel', [EarningsController::class, 'exportExcel'])->name('earnings.export.excel');
-        
         // PC Units routes
         Route::get('/admin/pc-units', [PcUnitController::class, 'index'])->name('pcunits.index');
         Route::post('/admin/pc-units', [PcUnitController::class, 'store'])->name('pcunits.store');
@@ -77,9 +71,12 @@ Route::middleware(['auth'])->group(function () {
         
         // Reports routes
         Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('/admin/reports/earnings', [ReportController::class, 'earnings'])->name('reports.earnings');
         Route::get('/admin/reports/machines', [ReportController::class, 'machines'])->name('reports.machines');
         Route::get('/admin/reports/sessions', [ReportController::class, 'sessions'])->name('reports.sessions');
+        
+        // Reports Export routes
+        Route::get('/admin/reports/machines/export/pdf', [ReportController::class, 'exportMachinesPDF'])->name('reports.machines.export.pdf');
+        Route::get('/admin/reports/sessions/export/pdf', [ReportController::class, 'exportSessionsPDF'])->name('reports.sessions.export.pdf');
     });
 });
 

@@ -27,9 +27,6 @@
     <a href="{{ route('transactions.index') }}" class="nav-item {{ Route::is('transactions.index') ? 'active' : '' }}">
       <span class="nav-icon">💳</span> Transactions
     </a>
-    <a href="{{ route('earnings.index') }}" class="nav-item">
-      <span class="nav-icon">💰</span> Earnings
-    </a>
     <a href="{{ route('coininserts.index') }}" class="nav-item {{ Route::is('coininserts.index') ? 'active' : '' }}">
       <span class="nav-icon">🪙</span> Coin Inserts
     </a>
