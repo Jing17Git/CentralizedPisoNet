@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Earning;
+use App\Models\Transaction;
 use App\Models\PcUnit;
 use App\Models\Session;
 use App\Models\CoinInsert;
@@ -19,15 +19,13 @@ class DashboardController extends Controller
         $today = Carbon::today();
         $yesterday = Carbon::yesterday();
 
-        // Get today's earnings total
-        $todayEarnings = Earning::whereDate('date_and_time', $today)
-            ->where('status', 'completed')
-            ->sum('amount');
+        // Get today's earnings total from coin inserts
+        $todayEarnings = CoinInsert::whereDate('inserted_time', $today)
+            ->sum('coin_value');
 
         // Get yesterday's earnings for comparison
-        $yesterdayEarnings = Earning::whereDate('date_and_time', $yesterday)
-            ->where('status', 'completed')
-            ->sum('amount');
+        $yesterdayEarnings = CoinInsert::whereDate('inserted_time', $yesterday)
+            ->sum('coin_value');
 
         // Calculate percentage change
         $earningsChange = 0;
@@ -36,13 +34,11 @@ class DashboardController extends Controller
         }
 
         // Get today's transaction count
-        $todayTransactions = Earning::whereDate('date_and_time', $today)
-            ->where('status', 'completed')
+        $todayTransactions = Transaction::whereDate('transaction_date', $today)
             ->count();
 
         // Get yesterday's transaction count for comparison
-        $yesterdayTransactions = Earning::whereDate('date_and_time', $yesterday)
-            ->where('status', 'completed')
+        $yesterdayTransactions = Transaction::whereDate('transaction_date', $yesterday)
             ->count();
 
         $transactionChange = 0;
@@ -54,38 +50,21 @@ class DashboardController extends Controller
         $avgTransaction = $todayTransactions > 0 ? $todayEarnings / $todayTransactions : 0;
 
         // Get recent transactions (latest 10)
-        $recentTransactions = Earning::where('status', 'completed')
-            ->orderBy('date_and_time', 'desc')
+        $recentTransactions = Transaction::where('status', 'completed')
+            ->orderBy('transaction_date', 'desc')
             ->limit(10)
             ->get();
 
-        // Get earnings breakdown by type for today
-        $gamingEarnings = Earning::whereDate('date_and_time', $today)
-            ->where('type', 'gaming')
-            ->where('status', 'completed')
-            ->sum('amount');
+        // Simplified earnings breakdown - all from coin inserts
+        $totalTodayEarnings = $todayEarnings;
+        $gamingPercent = 100;
+        $browsingPercent = 0;
+        $printingPercent = 0;
 
-        $browsingEarnings = Earning::whereDate('date_and_time', $today)
-            ->where('type', 'browsing')
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        $printingEarnings = Earning::whereDate('date_and_time', $today)
-            ->where('type', 'printing')
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        $totalTodayEarnings = $gamingEarnings + $browsingEarnings + $printingEarnings;
-
-        // Calculate percentages
-        $gamingPercent = $totalTodayEarnings > 0 ? ($gamingEarnings / $totalTodayEarnings) * 100 : 0;
-        $browsingPercent = $totalTodayEarnings > 0 ? ($browsingEarnings / $totalTodayEarnings) * 100 : 0;
-        $printingPercent = $totalTodayEarnings > 0 ? ($printingEarnings / $totalTodayEarnings) * 100 : 0;
-
-        // Get unique terminals with activity today (for machine status simulation)
-        $activeTerminals = Earning::whereDate('date_and_time', $today)
+        // Get active terminals from coin inserts
+        $activeTerminals = CoinInsert::whereDate('inserted_time', $today)
             ->distinct()
-            ->pluck('terminal')
+            ->pluck('pc_unit_id')
             ->toArray();
 
         // Generate machine statuses based on recent activity
@@ -125,15 +104,13 @@ class DashboardController extends Controller
         $today = Carbon::today();
         $yesterday = Carbon::yesterday();
 
-        // Get today's earnings total
-        $todayEarnings = Earning::whereDate('date_and_time', $today)
-            ->where('status', 'completed')
-            ->sum('amount');
+        // Get today's earnings total from coin inserts
+        $todayEarnings = CoinInsert::whereDate('inserted_time', $today)
+            ->sum('coin_value');
 
         // Get yesterday's earnings for comparison
-        $yesterdayEarnings = Earning::whereDate('date_and_time', $yesterday)
-            ->where('status', 'completed')
-            ->sum('amount');
+        $yesterdayEarnings = CoinInsert::whereDate('inserted_time', $yesterday)
+            ->sum('coin_value');
 
         // Calculate percentage change
         $earningsChange = 0;
@@ -142,13 +119,11 @@ class DashboardController extends Controller
         }
 
         // Get today's transaction count
-        $todayTransactions = Earning::whereDate('date_and_time', $today)
-            ->where('status', 'completed')
+        $todayTransactions = Transaction::whereDate('transaction_date', $today)
             ->count();
 
         // Get yesterday's transaction count for comparison
-        $yesterdayTransactions = Earning::whereDate('date_and_time', $yesterday)
-            ->where('status', 'completed')
+        $yesterdayTransactions = Transaction::whereDate('transaction_date', $yesterday)
             ->count();
 
         $transactionChange = 0;
@@ -160,38 +135,21 @@ class DashboardController extends Controller
         $avgTransaction = $todayTransactions > 0 ? $todayEarnings / $todayTransactions : 0;
 
         // Get recent transactions (latest 10)
-        $recentTransactions = Earning::where('status', 'completed')
-            ->orderBy('date_and_time', 'desc')
+        $recentTransactions = Transaction::where('status', 'completed')
+            ->orderBy('transaction_date', 'desc')
             ->limit(10)
             ->get();
 
-        // Get earnings breakdown by type for today
-        $gamingEarnings = Earning::whereDate('date_and_time', $today)
-            ->where('type', 'gaming')
-            ->where('status', 'completed')
-            ->sum('amount');
+        // Simplified earnings breakdown
+        $totalTodayEarnings = $todayEarnings;
+        $gamingPercent = 100;
+        $browsingPercent = 0;
+        $printingPercent = 0;
 
-        $browsingEarnings = Earning::whereDate('date_and_time', $today)
-            ->where('type', 'browsing')
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        $printingEarnings = Earning::whereDate('date_and_time', $today)
-            ->where('type', 'printing')
-            ->where('status', 'completed')
-            ->sum('amount');
-
-        $totalTodayEarnings = $gamingEarnings + $browsingEarnings + $printingEarnings;
-
-        // Calculate percentages
-        $gamingPercent = $totalTodayEarnings > 0 ? ($gamingEarnings / $totalTodayEarnings) * 100 : 0;
-        $browsingPercent = $totalTodayEarnings > 0 ? ($browsingEarnings / $totalTodayEarnings) * 100 : 0;
-        $printingPercent = $totalTodayEarnings > 0 ? ($printingEarnings / $totalTodayEarnings) * 100 : 0;
-
-        // Get unique terminals with activity today (for machine status)
-        $activeTerminals = Earning::whereDate('date_and_time', $today)
+        // Get active terminals from coin inserts
+        $activeTerminals = CoinInsert::whereDate('inserted_time', $today)
             ->distinct()
-            ->pluck('terminal')
+            ->pluck('pc_unit_id')
             ->toArray();
 
         // Generate machine statuses based on recent activity
@@ -219,10 +177,10 @@ class DashboardController extends Controller
                 'activities' => $activities,
                 'recentTransactions' => $recentTransactions->map(function($t) {
                     return [
-                        'terminal' => $t->terminal,
-                        'type' => $t->type,
-                        'amount' => (float) $t->amount,
-                        'date_and_time' => $t->date_and_time->toIso8601String(),
+                        'terminal' => $t->pc_unit_id ?? 'N/A',
+                        'type' => 'transaction',
+                        'amount' => (float) $t->total_coins,
+                        'date_and_time' => $t->transaction_date->toIso8601String(),
                         'status' => $t->status
                     ];
                 }),
@@ -246,9 +204,8 @@ class DashboardController extends Controller
             $dayName = $date->format('D');
             $labels[] = $dayName;
             
-            $dayEarnings = Earning::whereDate('date_and_time', $date)
-                ->where('status', 'completed')
-                ->sum('amount');
+            $dayEarnings = CoinInsert::whereDate('inserted_time', $date)
+                ->sum('coin_value');
             
             $earnings[] = (float) $dayEarnings;
         }
@@ -321,25 +278,15 @@ class DashboardController extends Controller
     private function generateActivityFeed($transactions): array
     {
         $activities = [];
-        $icons = [
-            'gaming' => '#00c8ff',
-            'browsing' => '#00e676',
-            'printing' => '#ffb400'
-        ];
-        $titles = [
-            'gaming' => 'Gaming Session Started',
-            'browsing' => 'Browsing Session Started',
-            'printing' => 'Print Job Completed'
-        ];
         
         foreach ($transactions->take(5) as $txn) {
-            $minutesAgo = Carbon::parse($txn->date_and_time)->diffInMinutes(Carbon::now());
-            $timeAgo = $minutesAgo < 1 ? 'Just now' : ($minutesAgo < 60 ? $minutesAgo . ' min ago' : Carbon::parse($txn->date_and_time)->format('H:i'));
+            $minutesAgo = Carbon::parse($txn->transaction_date)->diffInMinutes(Carbon::now());
+            $timeAgo = $minutesAgo < 1 ? 'Just now' : ($minutesAgo < 60 ? $minutesAgo . ' min ago' : Carbon::parse($txn->transaction_date)->format('H:i'));
             
             $activities[] = [
-                'dot' => $icons[$txn->type] ?? '#00c8ff',
-                'title' => $titles[$txn->type] ?? 'Transaction Completed',
-                'sub' => $txn->terminal . ' · ₱' . number_format($txn->amount, 2),
+                'dot' => '#00c8ff',
+                'title' => 'Transaction Completed',
+                'sub' => $txn->pc_unit_id . ' · ₱' . number_format($txn->total_coins, 2),
                 'time' => $timeAgo
             ];
         }
@@ -349,15 +296,6 @@ class DashboardController extends Controller
 
     /**
      * API endpoint for Dashboard Dataset - returns system summary data
-     * 
-     * Required Fields:
-     * - total_pc_units: Total number of PC units in the system
-     * - active_pc_units: Number of active/in-use PCs
-     * - available_pc_units: Number of available PCs
-     * - total_sessions_today: Total number of sessions today
-     * - total_income_today: Total income today
-     * - coins_inserted_today: Total coins inserted today
-     * - system_status: Overall system status
      */
     public function getDataset(Request $request)
     {
@@ -375,10 +313,9 @@ class DashboardController extends Controller
         // Get total sessions today (from Session model)
         $totalSessionsToday = Session::whereDate('start_time', $today)->count();
         
-        // Get total income today (from Earning model - completed transactions)
-        $totalIncomeToday = Earning::whereDate('date_and_time', $today)
-            ->where('status', 'completed')
-            ->sum('amount');
+        // Get total income today from coin inserts
+        $totalIncomeToday = CoinInsert::whereDate('inserted_time', $today)
+            ->sum('coin_value');
         
         // Get coins inserted today (from CoinInsert model)
         $coinsInsertedToday = CoinInsert::whereDate('inserted_time', $today)
@@ -389,9 +326,8 @@ class DashboardController extends Controller
         
         // Get yesterday's data for comparison
         $yesterday = Carbon::yesterday();
-        $yesterdayIncome = Earning::whereDate('date_and_time', $yesterday)
-            ->where('status', 'completed')
-            ->sum('amount');
+        $yesterdayIncome = CoinInsert::whereDate('inserted_time', $yesterday)
+            ->sum('coin_value');
         $yesterdaySessions = Session::whereDate('start_time', $yesterday)->count();
         
         // Calculate changes
@@ -461,4 +397,3 @@ class DashboardController extends Controller
         return 'operational';
     }
 }
-

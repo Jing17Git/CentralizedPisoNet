@@ -8,6 +8,9 @@ use App\Models\Session;
 use App\Models\CoinTransaction;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ReportsExport;
 
 class ReportController extends Controller
 {
@@ -54,31 +57,6 @@ class ReportController extends Controller
             'machineUsage',
             'filter'
         ));
-    }
-    
-    public function earnings(Request $request)
-    {
-        $query = CoinTransaction::with('machine')
-            ->orderBy('created_at', 'desc');
-        
-        // Apply filters
-        if ($request->has('date')) {
-            $query->whereDate('created_at', $request->date);
-        }
-        
-        if ($request->has('machine_id')) {
-            $query->where('machine_id', $request->machine_id);
-        }
-        
-        if ($request->has('filter')) {
-            $dateRange = $this->getDateRange($request->filter);
-            $query->whereBetween('created_at', $dateRange);
-        }
-        
-        $earnings = $query->paginate(20);
-        $machines = Machine::all();
-        
-        return view('admin.reports.earnings', compact('earnings', 'machines'));
     }
     
     public function machines(Request $request)
@@ -143,5 +121,67 @@ class ReportController extends Controller
             'month' => [Carbon::now()->startOfMonth(), Carbon::now()],
             default => [Carbon::today(), Carbon::now()],
         };
+    }
+
+    /**
+     * Export machines report to PDF
+     */
+    public function exportMachinesPDF(Request $request)
+    {
+        $machines = Machine::select('machines.*')
+            ->withCount(['sessions' => function($query) {
+                $query->select(DB::raw('count(*)'));
+            }])
+            ->withSum('coinTransactions', 'coins_inserted')
+            ->get();
+        
+        foreach ($machines as $machine) {
+            $machine->total_minutes = DB::table('pc_sessions')
+                ->where('pc_unit_number', $machine->machine_code)
+                ->sum(DB::raw('TIMESTAMPDIFF(MINUTE, start_time, COALESCE(end_time, NOW()))'));
+        }
+        
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        
+        $pdf = Pdf::loadView('admin.reports.machines-pdf', compact('machines', 'generatedAt'));
+        return $pdf->download('machines_report_' . now()->format('Ymd') . '.pdf');
+    }
+
+    /**
+     * Export sessions report to PDF
+     */
+    public function exportSessionsPDF(Request $request)
+    {
+        $query = DB::table('pc_sessions')
+            ->orderBy('start_time', 'desc');
+        
+        if ($request->has('machine_id')) {
+            $machine = Machine::find($request->machine_id);
+            if ($machine) {
+                $query->where('pc_unit_number', $machine->machine_code);
+            }
+        }
+        
+        if ($request->has('date')) {
+            $query->whereDate('start_time', $request->date);
+        }
+        
+        $sessions = $query->limit(100)->get();
+        
+        foreach ($sessions as $session) {
+            if ($session->end_time) {
+                $start = Carbon::parse($session->start_time);
+                $end = Carbon::parse($session->end_time);
+                $session->minutes_used = $start->diffInMinutes($end);
+            } else {
+                $start = Carbon::parse($session->start_time);
+                $session->minutes_used = $start->diffInMinutes(Carbon::now());
+            }
+        }
+        
+        $generatedAt = now()->format('Y-m-d H:i:s');
+        
+        $pdf = Pdf::loadView('admin.reports.sessions-pdf', compact('sessions', 'generatedAt'));
+        return $pdf->download('sessions_report_' . now()->format('Ymd') . '.pdf');
     }
 }
