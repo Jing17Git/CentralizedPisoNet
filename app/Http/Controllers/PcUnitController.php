@@ -56,7 +56,7 @@ class PcUnitController extends Controller
         $validated = $request->validate([
             'pc_number' => 'required|string|max:20|unique:pc_units,pc_number',
             'branch_id' => 'nullable|integer|min:1',
-            'ip_address' => 'nullable|ip',
+            'ip_address' => 'required|ip|unique:pc_units,ip_address',
             'status' => 'nullable|in:available,in_use,offline',
         ]);
 
@@ -78,7 +78,7 @@ class PcUnitController extends Controller
         $validated = $request->validate([
             'pc_number' => 'required|string|max:20|unique:pc_units,pc_number,' . $pcUnit->id,
             'branch_id' => 'nullable|integer|min:1',
-            'ip_address' => 'nullable|ip',
+            'ip_address' => 'required|ip|unique:pc_units,ip_address,' . $pcUnit->id,
             'status' => 'nullable|in:available,in_use,offline',
         ]);
 
