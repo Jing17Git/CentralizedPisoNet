@@ -35,6 +35,19 @@
     </a>
   </div>
 
+  <div class="nav-section">
+    <div class="nav-label">System</div>
+    <a href="{{ route('rates.index') }}" class="nav-item {{ Route::is('rates.*') ? 'active' : '' }}">
+      <span class="nav-icon">💵</span> Rates
+    </a>
+    <a href="{{ route('lockscreen.index') }}" class="nav-item {{ Route::is('lockscreen.*') ? 'active' : '' }}">
+      <span class="nav-icon">🔒</span> Lockscreen
+    </a>
+    <a href="{{ route('settings.index') }}" class="nav-item {{ Route::is('settings.*') ? 'active' : '' }}">
+      <span class="nav-icon">⚙️</span> Settings
+    </a>
+  </div>
+
   
 
   <div class="sidebar-footer">

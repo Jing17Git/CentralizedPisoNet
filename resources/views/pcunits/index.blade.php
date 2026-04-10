@@ -603,8 +603,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">IP Address</label>
-                    <input type="text" name="ip_address" id="ipAddress" class="form-input" placeholder="e.g., 192.168.1.101">
+                    <label class="form-label">IP Address <span style="color: var(--accent-red);">*</span></label>
+                    <input type="text" name="ip_address" id="ipAddress" class="form-input" placeholder="e.g., 192.168.1.101" required>
+                    <small style="color: var(--text-lo); font-size: 11px; margin-top: 4px; display: block;">Enter the computer's local network IP address</small>
                 </div>
                 
                 <div class="form-group">

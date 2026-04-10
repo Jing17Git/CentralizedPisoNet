@@ -5,10 +5,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PcUnitController;
 use App\Http\Controllers\SessionController;
-
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\CoinInsertController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\LockScreenController;
+use App\Http\Controllers\RatesController;
 
 // Public routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -77,6 +79,21 @@ Route::middleware(['auth'])->group(function () {
         // Reports Export routes
         Route::get('/admin/reports/machines/export/pdf', [ReportController::class, 'exportMachinesPDF'])->name('reports.machines.export.pdf');
         Route::get('/admin/reports/sessions/export/pdf', [ReportController::class, 'exportSessionsPDF'])->name('reports.sessions.export.pdf');
+        
+        // Settings routes
+        Route::get('/admin/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::put('/admin/settings', [SettingsController::class, 'update'])->name('settings.update');
+        Route::post('/admin/settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
+        Route::post('/admin/settings/restore', [SettingsController::class, 'restore'])->name('settings.restore');
+        
+        // Lockscreen routes
+        Route::get('/admin/lockscreen', [LockScreenController::class, 'index'])->name('lockscreen.index');
+        Route::put('/admin/lockscreen', [LockScreenController::class, 'update'])->name('lockscreen.update');
+        Route::get('/admin/lockscreen/preview', [LockScreenController::class, 'preview'])->name('lockscreen.preview');
+        
+        // Rates routes
+        Route::get('/admin/rates', [RatesController::class, 'index'])->name('rates.index');
+        Route::put('/admin/rates', [RatesController::class, 'update'])->name('rates.update');
     });
 });
 
