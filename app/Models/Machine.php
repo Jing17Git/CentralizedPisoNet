@@ -11,7 +11,13 @@ class Machine extends Model
         'machine_code',
         'ip_address',
         'location',
-        'status'
+        'status',
+        'slot_enabled',
+        'last_heartbeat'
+    ];
+
+    protected $casts = [
+        'last_heartbeat' => 'datetime',
     ];
 
     public function sessions()

@@ -17,6 +17,16 @@ class Session extends Model
     protected $table = 'pc_sessions';
 
     /**
+     * Get the route key for the model.
+     *
+     * @return string
+     */
+    public function getRouteKeyName()
+    {
+        return 'id';
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>

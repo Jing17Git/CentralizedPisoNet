@@ -135,16 +135,9 @@ class DashboardController extends Controller
         $avgTransaction = $todayTransactions > 0 ? $todayEarnings / $todayTransactions : 0;
 
         // Get recent transactions (latest 10)
-        $recentTransactions = Transaction::where('status', 'completed')
-            ->orderBy('transaction_date', 'desc')
+        $recentTransactions = Transaction::orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
-
-        // Simplified earnings breakdown
-        $totalTodayEarnings = $todayEarnings;
-        $gamingPercent = 100;
-        $browsingPercent = 0;
-        $printingPercent = 0;
 
         // Get active terminals from coin inserts
         $activeTerminals = CoinInsert::whereDate('inserted_time', $today)
@@ -152,14 +145,8 @@ class DashboardController extends Controller
             ->pluck('pc_unit_id')
             ->toArray();
 
-        // Generate machine statuses based on recent activity
+        // Generate machine statuses
         $machines = $this->generateMachineStatuses($activeTerminals);
-
-        // Get activity feed
-        $activities = $this->generateActivityFeed($recentTransactions);
-
-        // Get weekly earnings for chart
-        $weeklyData = $this->getWeeklyEarningsData();
 
         return response()->json([
             'success' => true,
@@ -169,23 +156,16 @@ class DashboardController extends Controller
                 'todayTransactions' => (int) $todayTransactions,
                 'transactionChange' => (float) $transactionChange,
                 'avgTransaction' => (float) $avgTransaction,
-                'totalTodayEarnings' => (float) $totalTodayEarnings,
-                'gamingPercent' => (float) $gamingPercent,
-                'browsingPercent' => (float) $browsingPercent,
-                'printingPercent' => (float) $printingPercent,
                 'machines' => $machines,
-                'activities' => $activities,
                 'recentTransactions' => $recentTransactions->map(function($t) {
                     return [
                         'terminal' => $t->pc_unit_id ?? 'N/A',
-                        'type' => 'transaction',
                         'amount' => (float) $t->total_coins,
-                        'date_and_time' => $t->transaction_date->toIso8601String(),
+                        'minutes' => (int) $t->total_minutes,
+                        'date_and_time' => $t->created_at->toIso8601String(),
                         'status' => $t->status
                     ];
                 }),
-                'weeklyEarnings' => $weeklyData['earnings'],
-                'weeklyLabels' => $weeklyData['labels']
             ],
             'timestamp' => now()->toIso8601String()
         ]);
@@ -218,58 +198,71 @@ class DashboardController extends Controller
      */
     private function generateMachineStatuses(array $activeTerminals): array
     {
-        // Get all PC Units from database
-        $pcUnits = PcUnit::orderBy('pc_number', 'asc')->get();
+        // Get all machines from database (these are the actual PCs with coin slots)
+        $machines = \App\Models\Machine::orderBy('machine_code', 'asc')->get();
         
-        // If no PC units in database, return empty array
-        if ($pcUnits->isEmpty()) {
+        // If no machines in database, return empty array
+        if ($machines->isEmpty()) {
             return [];
         }
         
         // Get active sessions to determine which PCs are in use
         $activeSessions = Session::where('status', 'Active')
             ->get()
-            ->keyBy('pc_unit_number');
+            ->keyBy(function($session) {
+                return $session->pc_unit_number;
+            });
         
-        $machines = [];
+        $result = [];
         
-        foreach ($pcUnits as $pc) {
-            $pcNumber = $pc->pc_number;
-            $pcNumberFormatted = 'PC-' . str_pad($pcNumber, 2, '0', STR_PAD_LEFT);
+        foreach ($machines as $machine) {
+            $machineCode = $machine->machine_code; // e.g., "PC-01"
             
-            // Check if PC has an active session
+            // Extract PC number for session lookup
+            $pcNumber = (int) str_replace('PC-', '', $machineCode);
+            
+            // Check if machine has an active session
             $activeSession = $activeSessions->get($pcNumber);
             
-            if ($activeSession) {
-                // PC is in use
-                $status = 'busy';
-                // Calculate elapsed time
-                $startTime = Carbon::parse($activeSession->start_time);
-                $elapsedMinutes = $startTime->diffInMinutes(now());
-                $remainingMinutes = $activeSession->remaining_time ?? 0;
-                $time = $elapsedMinutes . ':' . str_pad(($remainingMinutes % 60), 2, '0', STR_PAD_LEFT);
-            } elseif ($pc->is_active && $pc->status === 'available') {
-                // PC is available and active
-                $status = 'online';
-                $time = '--:--';
-            } elseif (!$pc->is_active) {
-                // PC is inactive
-                $status = 'offline';
-                $time = '--:--';
-            } else {
-                // PC is active but not available (maybe in use without session tracking)
-                $status = 'busy';
-                $time = '00:00';
+            // Check heartbeat age first
+            $isOnline = false;
+            if ($machine->last_heartbeat) {
+                $heartbeatAge = $machine->last_heartbeat->diffInSeconds(now());
+                $isOnline = ($heartbeatAge <= 60); // Online if heartbeat within 60 seconds
             }
             
-            $machines[] = [
-                'id' => $pcNumberFormatted,
+            // Determine status and time display
+            if ($activeSession && $isOnline) {
+                // Machine is BUSY - has active session AND is online
+                $status = 'busy';
+                $remainingSeconds = $activeSession->remaining_time * 60; // Convert minutes to seconds
+                
+                // Return raw seconds for JavaScript countdown
+                $time = $remainingSeconds;
+                $displayType = 'countdown';
+                
+            } elseif ($isOnline && !$activeSession) {
+                // Machine is ONLINE - heartbeat received, no active session
+                $status = 'online';
+                $time = 'Ready';
+                $displayType = 'text';
+            } else {
+                // Machine is OFFLINE - no heartbeat or timeout
+                $status = 'offline';
+                $time = 'Disconnected';
+                $displayType = 'text';
+            }
+            
+            $result[] = [
+                'id' => $machineCode,
                 'status' => $status,
-                'time' => $time
+                'time' => $time,
+                'displayType' => $displayType,
+                'last_heartbeat' => $machine->last_heartbeat ? $machine->last_heartbeat->diffForHumans() : 'Never'
             ];
         }
         
-        return $machines;
+        return $result;
     }
 
     /**

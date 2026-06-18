@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Session;
 use App\Models\Machine;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -68,6 +69,20 @@ class SessionApiController extends Controller
             'end_time' => now(),
             'status' => 'Ended'
         ]);
+        
+        // Complete related transaction
+        $machineCode = 'PC-' . str_pad($session->pc_unit_number, 2, '0', STR_PAD_LEFT);
+        $transaction = Transaction::where('pc_unit_id', $machineCode)
+            ->where('status', 'active')
+            ->orderBy('start_time', 'desc')
+            ->first();
+        
+        if ($transaction) {
+            $transaction->update([
+                'end_time' => now(),
+                'status' => 'completed'
+            ]);
+        }
         
         return response()->json([
             'success' => true,
