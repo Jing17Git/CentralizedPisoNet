@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\MachineApiController;
 use App\Http\Controllers\Api\SessionApiController;
 use App\Http\Controllers\Api\CoinApiController;
 
-Route::middleware('api.token')->group(function () {
+Route::middleware(['api.token', 'throttle:60,1'])->group(function () {
     // Machine routes
     Route::get('/machines', [MachineApiController::class, 'index']);
     Route::get('/machines/{machineCode}', [MachineApiController::class, 'show']);

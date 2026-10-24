@@ -12,13 +12,12 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\RatesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\LockScreenController;
+use App\Http\Middleware\AdminMiddleware;
 
-// Guest routes
+// Guest routes (login only — registration is admin-only)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
 });
 
 // Authenticated routes
@@ -43,4 +42,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/lock', [LockScreenController::class, 'index'])->name('lock');
     Route::put('/lock', [LockScreenController::class, 'update'])->name('lock.update');
+    Route::get('/lock/preview', [LockScreenController::class, 'preview'])->name('lock.preview');
+
+    // Admin-only: user registration (create new system accounts)
+    Route::middleware(AdminMiddleware::class)->group(function () {
+        Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+        Route::post('/register', [AuthController::class, 'register']);
+    });
 });

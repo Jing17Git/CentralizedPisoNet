@@ -13,7 +13,7 @@ class ApiTokenMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->header('X-API-Token') ?? $request->input('api_token');
+        $token = $request->header('X-API-Token');
         
         $validToken = config('app.api_token');
 

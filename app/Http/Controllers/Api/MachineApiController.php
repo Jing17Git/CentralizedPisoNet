@@ -11,14 +11,18 @@ class MachineApiController extends Controller
     /**
      * Get all machines
      */
-    public function index()
+    public function index(Request $request)
     {
-        $machines = Machine::all();
+        $perPage = min(max((int) $request->input('per_page', 25), 1), 100);
+        $machines = Machine::paginate($perPage);
         
         return response()->json([
             'success' => true,
-            'data' => $machines,
-            'count' => $machines->count()
+            'data' => $machines->items(),
+            'count' => count($machines->items()),
+            'total' => $machines->total(),
+            'current_page' => $machines->currentPage(),
+            'last_page' => $machines->lastPage(),
         ]);
     }
     

@@ -128,7 +128,7 @@ class Session extends Model
      */
     public static function generateSessionId(): string
     {
-        return 'SES-' . strtoupper(uniqid()) . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+        return 'SES-' . (string) \Illuminate\Support\Str::ulid();
     }
 }
 
