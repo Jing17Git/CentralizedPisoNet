@@ -9,96 +9,44 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\CoinInsertController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\LockScreenController;
 use App\Http\Controllers\RatesController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\LockScreenController;
+use App\Http\Middleware\AdminMiddleware;
 
-// Public routes
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-// Protected routes - requires authentication
-Route::middleware(['auth'])->group(function () {
-    // Dashboard (admin dashboard)
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Admin dashboard 
-    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    
-    // API route for real-time dashboard data (JSON)
-    Route::get('/api/dashboard/realtime', [DashboardController::class, 'realtimeData'])->name('dashboard.realtime');
-    
-    // API route for dashboard dataset (system summary)
-    Route::get('/api/dashboard/dataset', [DashboardController::class, 'getDataset'])->name('dashboard.dataset');
-    
-    // Admin routes
-    Route::group([], function () {
-        // Password update route
-        Route::post('/admin/password', [AuthController::class, 'updatePassword'])->name('admin.password.update');
-        
-        // Profile routes
-        Route::get('/admin/profile', [App\Http\Controllers\ProfileController::class, 'show'])->name('admin.profile.show');
-        Route::get('/admin/profile/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('admin.profile.edit');
-        Route::put('/admin/profile/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('admin.profile.update');
-        
-        // PC Units routes
-        Route::get('/admin/pc-units', [PcUnitController::class, 'index'])->name('pcunits.index');
-        Route::post('/admin/pc-units', [PcUnitController::class, 'store'])->name('pcunits.store');
-        Route::put('/admin/pc-units/{pcUnit}', [PcUnitController::class, 'update'])->name('pcunits.update');
-        Route::delete('/admin/pc-units/{pcUnit}', [PcUnitController::class, 'destroy'])->name('pcunits.destroy');
-        Route::post('/admin/pc-units/{pcUnit}/toggle-active', [PcUnitController::class, 'toggleActive'])->name('pcunits.toggleActive');
-        Route::post('/admin/pc-units/{pcUnit}/status', [PcUnitController::class, 'updateStatus'])->name('pcunits.updateStatus');
-        
-        // Session Monitoring routes
-        Route::get('/admin/sessions', [SessionController::class, 'index'])->name('sessions.index');
-        Route::post('/admin/sessions', [SessionController::class, 'store'])->name('sessions.store');
-        Route::post('/admin/sessions/{session}/end', [SessionController::class, 'endSession'])->name('sessions.end');
-        Route::post('/admin/sessions/{session}/extend', [SessionController::class, 'extendSession'])->name('sessions.extend');
-        Route::get('/api/sessions/active', [SessionController::class, 'getActiveSessions'])->name('sessions.api.active');
-        
-        // Transaction routes
-        Route::get('/admin/transactions', [TransactionController::class, 'index'])->name('transactions.index');
-        Route::post('/admin/transactions', [TransactionController::class, 'store'])->name('transactions.store');
-        Route::post('/admin/transactions/{transaction}/complete', [TransactionController::class, 'complete'])->name('transactions.complete');
-        Route::get('/admin/transactions/export/pdf', [TransactionController::class, 'exportPDF'])->name('transactions.export.pdf');
-        Route::get('/admin/transactions/export/excel', [TransactionController::class, 'exportExcel'])->name('transactions.export.excel');
-        
-        // Coin Insert routes
-        Route::get('/admin/coin-inserts', [CoinInsertController::class, 'index'])->name('coininserts.index');
-        Route::post('/admin/coin-inserts', [CoinInsertController::class, 'store'])->name('coininserts.store');
-        Route::get('/admin/coin-inserts/export/pdf', [CoinInsertController::class, 'exportPDF'])->name('coininserts.export.pdf');
-        Route::get('/admin/coin-inserts/export/excel', [CoinInsertController::class, 'exportExcel'])->name('coininserts.export.excel');
-        
-        // Reports routes
-        Route::get('/admin/reports', [ReportController::class, 'index'])->name('reports.index');
-        Route::get('/admin/reports/machines', [ReportController::class, 'machines'])->name('reports.machines');
-        Route::get('/admin/reports/sessions', [ReportController::class, 'sessions'])->name('reports.sessions');
-        
-        // Reports Export routes
-        Route::get('/admin/reports/machines/export/pdf', [ReportController::class, 'exportMachinesPDF'])->name('reports.machines.export.pdf');
-        Route::get('/admin/reports/sessions/export/pdf', [ReportController::class, 'exportSessionsPDF'])->name('reports.sessions.export.pdf');
-        
-        // Settings routes
-        Route::get('/admin/settings', [SettingsController::class, 'index'])->name('settings.index');
-        Route::put('/admin/settings', [SettingsController::class, 'update'])->name('settings.update');
-        Route::post('/admin/settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
-        Route::post('/admin/settings/restore', [SettingsController::class, 'restore'])->name('settings.restore');
-        
-        // Lockscreen routes
-        Route::get('/admin/lockscreen', [LockScreenController::class, 'index'])->name('lockscreen.index');
-        Route::put('/admin/lockscreen', [LockScreenController::class, 'update'])->name('lockscreen.update');
-        Route::get('/admin/lockscreen/preview', [LockScreenController::class, 'preview'])->name('lockscreen.preview');
-        
-        // Rates routes
-        Route::get('/admin/rates', [RatesController::class, 'index'])->name('rates.index');
-        Route::put('/admin/rates', [RatesController::class, 'update'])->name('rates.update');
-    });
+// Guest routes (login only — registration is admin-only)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
 });
 
-// Redirect root to welcome page
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+// Authenticated routes
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/password/update', [AuthController::class, 'updatePassword'])->name('password.update');
 
+    Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::resource('pc-units', PcUnitController::class)->names('pc-units');
+    Route::resource('sessions', SessionController::class)->names('sessions');
+    Route::resource('transactions', TransactionController::class)->names('transactions');
+    Route::resource('coin-inserts', CoinInsertController::class)->names('coin-inserts');
+    Route::resource('settings', SettingsController::class)->names('settings');
+    Route::resource('rates', RatesController::class)->names('rates');
+
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.index');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/lock', [LockScreenController::class, 'index'])->name('lock');
+    Route::put('/lock', [LockScreenController::class, 'update'])->name('lock.update');
+    Route::get('/lock/preview', [LockScreenController::class, 'preview'])->name('lock.preview');
+
+    // Admin-only: user registration (create new system accounts)
+    Route::middleware(AdminMiddleware::class)->group(function () {
+        Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+        Route::post('/register', [AuthController::class, 'register']);
+    });
+});

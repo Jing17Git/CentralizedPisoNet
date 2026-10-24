@@ -87,7 +87,7 @@ class Transaction extends Model
      */
     public static function generateTransactionId(): string
     {
-        return 'TXN-' . strtoupper(uniqid()) . '-' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+        return 'TXN-' . (string) \Illuminate\Support\Str::ulid();
     }
 
     /**

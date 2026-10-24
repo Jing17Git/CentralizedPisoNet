@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sessions', function (Blueprint $table) {
+        Schema::create('pc_sessions', function (Blueprint $table) {
             $table->id();
             $table->string('session_id', 100)->unique();
             $table->string('pc_unit_number', 50);
@@ -33,7 +33,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('pc_sessions');
     }
 };
 

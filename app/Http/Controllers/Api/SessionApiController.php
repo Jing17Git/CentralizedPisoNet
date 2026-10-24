@@ -31,12 +31,9 @@ class SessionApiController extends Controller
             ], 404);
         }
         
-        // Extract PC number from machine code (e.g., PC-01 -> 1)
-        $pcNumber = (int) str_replace('PC-', '', $validated['machine_code']);
-        
         $session = Session::create([
-            'session_id' => 'SES-' . strtoupper(Str::random(10)),
-            'pc_unit_number' => $pcNumber,
+            'session_id' => Session::generateSessionId(),
+            'pc_unit_number' => $validated['machine_code'],
             'user_session_name' => $validated['user_name'] ?? 'Guest',
             'start_time' => now(),
             'remaining_time' => $validated['minutes'],
@@ -137,10 +134,12 @@ class SessionApiController extends Controller
      */
     public function getByMachine($machineCode)
     {
-        // Extract PC number from machine code
-        $pcNumber = (int) str_replace('PC-', '', $machineCode);
-        
-        $session = Session::where('pc_unit_number', $pcNumber)
+        $session = Session::where(function ($q) use ($machineCode) {
+                $q->where('pc_unit_number', $machineCode);
+                if (preg_match('/\d+/', $machineCode, $matches)) {
+                    $q->orWhere('pc_unit_number', (string) (int) $matches[0]);
+                }
+            })
             ->where('status', 'Active')
             ->first();
         

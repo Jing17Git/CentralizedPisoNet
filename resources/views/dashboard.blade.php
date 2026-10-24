@@ -1,495 +1,338 @@
-
-@extends('layouts.admin')
-
-@section('title', 'PisoNet Central — Admin Dashboard')
+@extends('layouts.app')
+@section('title', 'Dashboard Overview')
 
 @section('content')
-    <!-- STATS ROW -->
-    <div class="stats-row">
-      <div class="stat-card c1">
-        <div class="stat-label">TOTAL EARNINGS TODAY</div>
-        <div class="stat-value" id="todayEarnings">₱{{ number_format($todayEarnings, 2, '.', ',') }}</div>
-        <div class="stat-meta">
-            <span class="{{ $earningsChange >= 0 ? 'up' : 'down' }}" id="earningsChange">
-                {{ $earningsChange >= 0 ? '▲' : '▼' }} {{ number_format(abs($earningsChange), 1) }}%
-            </span>
-            <span style="color:var(--text-lo)">vs yesterday</span>
-        </div>
-        <div class="stat-icon">💵</div>
-      </div>
-      <div class="stat-card c2">
-        <div class="stat-label">ACTIVE USERS NOW</div>
-        <div class="stat-value" id="activeUsers">{{ count($machines) - collect($machines)->where('status', 'offline')->count() }}</div>
-        <div class="stat-meta"><span class="up">▲ <span id="activeUsersChange">0</span></span><span style="color:var(--text-lo)">from last hour</span></div>
-        <div class="stat-icon">👥</div>
-      </div>
-      <div class="stat-card c3">
-        <div class="stat-label">MACHINES ONLINE</div>
-        <div class="stat-value" id="machinesOnline">{{ count($machines) - collect($machines)->where('status', 'offline')->count() }}<span class="unit">/{{ count($machines) }}</span></div>
-        <div class="stat-meta">
-            <span class="{{ collect($machines)->where('status', 'offline')->count() > 0 ? 'down' : 'up' }}" id="machinesOffline">
-                {{ collect($machines)->where('status', 'offline')->count() > 0 ? '▼' : '▲' }} {{ collect($machines)->where('status', 'offline')->count() }}
-            </span>
-            <span style="color:var(--text-lo)">offline</span>
-        </div>
-        <div class="stat-icon">🖥</div>
-      </div>
-      <div class="stat-card c4">
-        <div class="stat-label">TRANSACTIONS TODAY</div>
-        <div class="stat-value" id="todayTransactions">{{ $todayTransactions }}</div>
-        <div class="stat-meta">
-            <span class="{{ $transactionChange >= 0 ? 'up' : 'down' }}" id="transactionChange">
-                {{ $transactionChange >= 0 ? '▲' : '▼' }} {{ number_format(abs($transactionChange), 1) }}%
-            </span>
-            <span style="color:var(--text-lo)">avg ₱{{ number_format($avgTransaction, 2) }}/txn</span>
-        </div>
-        <div class="stat-icon">🧾</div>
-      </div>
+<!-- DASHBOARD WELCOME HERO -->
+<div class="dashboard-hero">
+    <div>
+        <h2>Welcome back, {{ Auth::user()->name ?? 'Administrator' }}</h2>
+        <p>Real-time telemetry, terminal utilization, and centralized revenue metrics.</p>
     </div>
-
-    <!-- DATASET ROW - System Summary -->
-    <div class="stats-row" style="margin-top: 20px;">
-      <div class="stat-card" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-        <div class="stat-label">TOTAL PC UNITS</div>
-        <div class="stat-value" id="totalPcUnits">--</div>
-        <div class="stat-meta">
-            <span style="color:var(--text-lo)">System capacity</span>
-        </div>
-        <div class="stat-icon">🖥️</div>
-      </div>
-      <div class="stat-card" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-        <div class="stat-label">ACTIVE PC UNITS</div>
-        <div class="stat-value" id="activePcUnits">--</div>
-        <div class="stat-meta">
-            <span style="color:var(--text-lo)">Currently active</span>
-        </div>
-        <div class="stat-icon">⚡</div>
-      </div>
-      <div class="stat-card" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-        <div class="stat-label">AVAILABLE PC UNITS</div>
-        <div class="stat-value" id="availablePcUnits">--</div>
-        <div class="stat-meta">
-            <span style="color:var(--text-lo)">Ready to use</span>
-        </div>
-        <div class="stat-icon">✅</div>
-      </div>
-      <div class="stat-card" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-        <div class="stat-label">SYSTEM STATUS</div>
-        <div class="stat-value" id="systemStatus">--</div>
-        <div class="stat-meta">
-            <span style="color:var(--text-lo)" id="systemStatusText">Checking...</span>
-        </div>
-        <div class="stat-icon" id="systemStatusIcon">🔄</div>
-      </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="{{ route('pc-units.index') }}" class="btn btn-outline btn-sm">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span>Manage Fleet</span>
+        </a>
+        <a href="{{ route('reports.index') }}" class="btn btn-primary btn-sm">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <span>Full Reports</span>
+        </a>
     </div>
+</div>
 
-    <!-- DATASET ROW 2 - Sessions and Coins -->
-    <div class="stats-row" style="margin-top: 20px;">
-      <div class="stat-card" style="background: linear-gradient(135deg, #2d1b4e 0%, #1a1a2e 100%);">
-        <div class="stat-label">SESSIONS TODAY</div>
-        <div class="stat-value" id="totalSessionsToday">--</div>
-        <div class="stat-meta">
-            <span style="color:var(--text-lo)" id="sessionsChangeText">--</span>
-        </div>
-        <div class="stat-icon">🎮</div>
-      </div>
-      <div class="stat-card" style="background: linear-gradient(135deg, #2d1b4e 0%, #1a1a2e 100%);">
-        <div class="stat-label">COINS INSERTED TODAY</div>
-        <div class="stat-value" id="coinsInsertedToday">--</div>
-        <div class="stat-meta">
-            <span style="color:var(--text-lo)">Total coin value</span>
-        </div>
-        <div class="stat-icon">🪙</div>
-      </div>
-    </div>
-
-    <!-- MID ROW -->
-    <div class="mid-row">
-      <!-- Machine Status Grid -->
-      <div class="glass-card" style="flex: 1;">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Machine <span>Status</span></div>
-            <div class="card-sub">Real-time view — {{ count($machines) }} terminals</div>
-          </div>
-          <div class="pills">
-            <div class="pill active">All</div>
-            <div class="pill inactive">Online</div>
-            <div class="pill inactive">Offline</div>
-          </div>
-        </div>
-        @if(count($machines) > 0)
-        <div class="machine-grid" id="machineGrid"></div>
-        @else
-        <div class="empty-state" style="padding: 40px 20px;">
-          <div class="empty-icon">🖥️</div>
-          <div class="empty-title">No PC Units Configured</div>
-          <div class="empty-sub">Add PC units to see machine status</div>
-        </div>
-        @endif
-      </div>
-
-      <!-- Revenue Breakdown -->
-      <div class="glass-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Revenue <span>Breakdown</span></div>
-            <div class="card-sub">By session type</div>
-          </div>
-        </div>
-        @if($totalTodayEarnings > 0)
-        <div class="donut-wrap">
-          <svg class="donut-svg" width="130" height="130" viewBox="0 0 130 130">
-            <!-- segments -->
-            <circle cx="65" cy="65" r="50" fill="none" stroke="rgba(0,200,255,0.08)" stroke-width="18"/>
-            <circle cx="65" cy="65" r="50" fill="none" stroke="url(#g1)" stroke-width="18"
-              stroke-dasharray="188 126" stroke-dashoffset="-30" stroke-linecap="round"/>
-            <circle cx="65" cy="65" r="50" fill="none" stroke="url(#g2)" stroke-width="18"
-              stroke-dasharray="82 232" stroke-dashoffset="-218" stroke-linecap="round"/>
-            <circle cx="65" cy="65" r="50" fill="none" stroke="rgba(255,180,0,0.8)" stroke-width="18"
-              stroke-dasharray="38 276" stroke-dashoffset="-300" stroke-linecap="round"/>
-            <defs>
-              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#0077ff"/>
-                <stop offset="100%" stop-color="#00c8ff"/>
-              </linearGradient>
-              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#9b59b6"/>
-                <stop offset="100%" stop-color="#e91e8c"/>
-              </linearGradient>
-            </defs>
-            <text x="65" y="60" class="donut-center" fill="#e8f4ff" font-size="18" font-family="Syne" font-weight="800">₱{{ number_format($totalTodayEarnings, 2, '.', ',') }}</text>
-            <text x="65" y="77" class="donut-center" fill="#7fa8c9" font-size="9" font-family="DM Mono">TODAY TOTAL</text>
-          </svg>
-          <div class="donut-legend">
-            <div class="dl-item">
-              <div class="dl-name" style="color:#00c8ff">Gaming</div>
-              <div class="dl-bar-wrap"><div class="dl-bar" style="width:60%;background:linear-gradient(90deg,#0077ff,#00c8ff)"></div></div>
-              <div class="dl-pct">60%</div>
+<!-- KPI METRIC CARDS -->
+<div class="stats-grid">
+    <!-- Card 1: Today's Revenue -->
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <div class="stat-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 6v12M15 9.5a3.5 3.5 0 0 0-5 0c0 2 3 2.5 3 4.5a3.5 3.5 0 0 1-5 0"></path>
+                </svg>
             </div>
-            <div class="dl-item">
-              <div class="dl-name" style="color:#e91e8c">Browsing</div>
-              <div class="dl-bar-wrap"><div class="dl-bar" style="width:26%;background:linear-gradient(90deg,#9b59b6,#e91e8c)"></div></div>
-              <div class="dl-pct">26%</div>
-            </div>
-            <div class="dl-item">
-              <div class="dl-name" style="color:#ffb400">Printing</div>
-              <div class="dl-bar-wrap"><div class="dl-bar" style="width:14%;background:#ffb400"></div></div>
-              <div class="dl-pct">14%</div>
-            </div>
-          </div>
+            @if(isset($earningsChange))
+                <span class="stat-trend {{ $earningsChange >= 0 ? 'positive' : 'negative' }}">
+                    {{ $earningsChange >= 0 ? '▲ +' : '▼ ' }}{{ number_format(abs($earningsChange), 1) }}%
+                </span>
+            @endif
         </div>
-        @else
-        <div class="empty-state" style="padding: 40px 20px;">
-          <div class="empty-icon">📊</div>
-          <div class="empty-title">No Earnings Data</div>
-          <div class="empty-sub">Revenue breakdown will appear here</div>
-        </div>
-        @endif
-      </div>
+        <div class="value">₱{{ number_format($todayEarnings, 2) }}</div>
+        <div class="label">Today's Total Revenue</div>
     </div>
-@endsection
 
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-// ── Weekly Chart (Chart.js) ──
-const weeklyLabels = @json($weeklyLabels);
-const weeklyEarnings = @json($weeklyEarnings);
+    <!-- Card 2: Transactions Today -->
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <div class="stat-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <line x1="2" y1="10" x2="22" y2="10"></line>
+                    <circle cx="7" cy="15" r="1"></circle>
+                </svg>
+            </div>
+            @if(isset($transactionChange))
+                <span class="stat-trend {{ $transactionChange >= 0 ? 'positive' : 'negative' }}">
+                    {{ $transactionChange >= 0 ? '▲ +' : '▼ ' }}{{ number_format(abs($transactionChange), 1) }}%
+                </span>
+            @endif
+        </div>
+        <div class="value">{{ number_format($todayTransactions) }}</div>
+        <div class="label">Total Transactions Today</div>
+    </div>
 
-const ctx = document.getElementById('weeklyChart').getContext('2d');
-const weeklyChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: weeklyLabels,
-        datasets: [{
-            label: 'Earnings (₱)',
-            data: weeklyEarnings,
-            backgroundColor: 'rgba(0, 200, 255, 0.6)',
-            borderColor: 'rgba(0, 200, 255, 1)',
-            borderWidth: 1,
-            borderRadius: 4,
-            barThickness: 30,
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(255,255,255,0.1)' },
-                ticks: { color: '#7fa8c9' }
-            },
-            x: {
-                grid: { display: false },
-                ticks: { color: '#7fa8c9' }
-            }
-        }
-    }
-});
+    <!-- Card 3: Avg Transaction -->
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <div class="stat-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                    <polyline points="16 7 22 7 22 13"></polyline>
+                </svg>
+            </div>
+            <span class="stat-trend neutral">Avg / User</span>
+        </div>
+        <div class="value">₱{{ number_format($avgTransaction, 2) }}</div>
+        <div class="label">Average Spend Per User</div>
+    </div>
 
-// ── Real-time Data Fetch ──
-let previousActiveUsers = {{ count($machines) - collect($machines)->where('status', 'offline')->count() }};
+    <!-- Card 4: Fleet Overview -->
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <div class="stat-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+            </div>
+            @php
+                $onlineCount = collect($machines)->where('status', 'online')->count();
+                $busyCount = collect($machines)->where('status', 'busy')->count();
+            @endphp
+            <span class="stat-trend positive">{{ $onlineCount + $busyCount }} Active</span>
+        </div>
+        <div class="value">{{ count($machines) }} Units</div>
+        <div class="label">Total Connected Machines</div>
+    </div>
+</div>
 
-async function fetchRealtimeData() {
-    try {
-        const response = await fetch('{{ route("dashboard.realtime") }}');
-        const result = await response.json();
-        
-        if (result.success) {
-            const data = result.data;
-            
-            // Update stats
-            document.getElementById('todayEarnings').textContent = '₱' + data.todayEarnings.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            
-            const earningsChangeEl = document.getElementById('earningsChange');
-            earningsChangeEl.className = data.earningsChange >= 0 ? 'up' : 'down';
-            earningsChangeEl.innerHTML = (data.earningsChange >= 0 ? '▲' : '▼') + ' ' + Math.abs(data.earningsChange).toFixed(1) + '%';
-            
-            document.getElementById('todayTransactions').textContent = data.todayTransactions;
-            
-            const txnChangeEl = document.getElementById('transactionChange');
-            txnChangeEl.className = data.transactionChange >= 0 ? 'up' : 'down';
-            txnChangeEl.innerHTML = (data.transactionChange >= 0 ? '▲' : '▼') + ' ' + Math.abs(data.transactionChange).toFixed(1) + '%';
-            
-            // Update machines
-            const onlineCount = data.machines.filter(m => m.status !== 'offline').length;
-            const offlineCount = data.machines.filter(m => m.status === 'offline').length;
-            document.getElementById('machinesOnline').innerHTML = onlineCount + '<span class="unit">/20</span>';
-            
-            const offlineEl = document.getElementById('machinesOffline');
-            offlineEl.className = offlineCount > 0 ? 'down' : 'up';
-            offlineEl.innerHTML = (offlineCount > 0 ? '▼' : '▲') + ' ' + offlineCount;
-            
-            // Update active users
-            const activeUsersEl = document.getElementById('activeUsers');
-            const newActive = data.machines.filter(m => m.status === 'busy' || m.status === 'online').length;
-            activeUsersEl.textContent = newActive;
-            
-            const activeChange = newActive - previousActiveUsers;
-            document.getElementById('activeUsersChange').textContent = Math.abs(activeChange);
-            previousActiveUsers = newActive;
-            
-            // Update machine grid
-            const grid = document.getElementById('machineGrid');
-            grid.innerHTML = '';
-            data.machines.forEach(m => {
-                grid.innerHTML += `
-                <div class="machine ${m.status}">
-                    <div class="machine-icon">${icons[m.status]}</div>
-                    <div class="machine-id">${m.id}</div>
-                    <div class="machine-time">${m.time}</div>
-                    <div class="machine-status">${m.status.toUpperCase()}</div>
-                </div>`;
-            });
-            
-            // Update activity feed
-            const feed = document.getElementById('activityFeed');
-            feed.innerHTML = '';
-            data.activities.forEach(a => {
-                feed.innerHTML += `
-                <div class="act-item">
-                    <div class="act-dot" style="background:${a.dot};box-shadow:0 0 6px ${a.dot}"></div>
-                    <div class="act-content">
-                    <div class="act-title">${a.title}</div>
-                    <div class="act-sub">${a.sub}</div>
+<!-- 2-COLUMN DASHBOARD CONTENT -->
+<div class="dashboard-grid-2col">
+    <!-- LEFT COLUMN: Weekly Chart & Recent Transactions -->
+    <div>
+        <!-- WEEKLY REVENUE CHART -->
+        <div class="card">
+            <div class="card-header-flex">
+                <div>
+                    <h3>
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        <span>7-Day Revenue Trend</span>
+                    </h3>
+                    <p style="font-size: 12.5px; color: var(--neutral-500); margin-top: 2px;">Daily coin insert collections over the last 7 days</p>
+                </div>
+                <div style="font-size: 12px; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 4px 10px; border-radius: 6px;">
+                    Past 7 Days
+                </div>
+            </div>
+            <div style="height: 240px; position: relative; width: 100%;">
+                <canvas id="weeklyRevenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- RECENT TRANSACTIONS TABLE -->
+        <div class="card">
+            <div class="card-header-flex">
+                <h3>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                    <span>Recent Transactions</span>
+                </h3>
+                <a href="{{ route('transactions.index') }}" class="btn btn-outline btn-sm">View All</a>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PC Unit</th>
+                            <th>Amount</th>
+                            <th>Allocated Time</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($recentTransactions as $txn)
+                        <tr>
+                            <td>
+                                <span style="font-weight: 700; color: var(--neutral-900);">{{ $txn->pc_unit_id }}</span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 700; color: var(--primary);">₱{{ number_format($txn->total_coins, 2) }}</span>
+                            </td>
+                            <td>
+                                <span style="color: var(--neutral-600); font-weight: 500;">{{ $txn->total_minutes }} mins</span>
+                            </td>
+                            <td>
+                                <span style="color: var(--neutral-500); font-size: 12.5px;">{{ \Carbon\Carbon::parse($txn->transaction_date)->format('M d, Y · h:i A') }}</span>
+                            </td>
+                            <td>
+                                @if($txn->status === 'completed')
+                                    <span class="badge badge-success">Completed</span>
+                                @else
+                                    <span class="badge badge-warning">{{ ucfirst($txn->status) }}</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--neutral-400); padding: 32px 16px;">
+                                No recent transactions recorded yet today.
+                            </td>
+                        </tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Machine Status & Activity Feed -->
+    <div>
+        <!-- MACHINE FLEET LIVE MONITOR -->
+        <div class="card">
+            <div class="card-header-flex">
+                <h3>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <span>Terminal Fleet</span>
+                </h3>
+                <a href="{{ route('pc-units.index') }}" class="btn btn-outline btn-sm">Configure</a>
+            </div>
+
+            <div class="machine-pill-grid">
+                @forelse($machines as $machine)
+                    <div class="machine-pill">
+                        <div class="machine-pill-header">
+                            <span class="machine-pill-name">{{ $machine['id'] }}</span>
+                            <span class="machine-pill-dot {{ $machine['status'] }}" title="{{ ucfirst($machine['status']) }}"></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: {{ $machine['status'] === 'online' ? 'var(--success-text)' : ($machine['status'] === 'busy' ? 'var(--warning-text)' : 'var(--danger-text)') }};">
+                                {{ $machine['status'] }}
+                            </span>
+                            <span class="machine-pill-time">{{ $machine['time'] }}</span>
+                        </div>
                     </div>
-                    <div class="act-time">${a.time}</div>
-                </div>`;
-            });
-            
-            // Update transactions
-            const tbody = document.getElementById('txnTable');
-            tbody.innerHTML = '';
-            data.recentTransactions.forEach(t => {
-                const time = new Date(t.date_and_time).toLocaleTimeString('en-PH', {hour: '2-digit', minute: '2-digit', hour12: false});
-                tbody.innerHTML += `
-                <tr>
-                    <td class="txn-machine">${t.terminal}</td>
-                    <td class="txn-user">--</td>
-                    <td class="txn-amount">₱${t.amount.toFixed(2)}</td>
-                    <td class="txn-dur">--</td>
-                    <td style="color:var(--text-mid);font-family:'DM Mono',monospace;font-size:11px">${time}</td>
-                    <td><span class="txn-badge ${t.status==='completed'?'badge-paid':'badge-pend'}">${t.status.toUpperCase()}</span></td>
-                </tr>`;
-            });
-            
-            // Update donut chart
-            document.querySelector('.donut-center').textContent = '₱' + data.totalTodayEarnings.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            
-            const legendItems = document.querySelectorAll('.dl-item');
-            if (legendItems.length >= 3) {
-                legendItems[0].querySelector('.dl-pct').textContent = data.gamingPercent.toFixed(0) + '%';
-                legendItems[0].querySelector('.dl-bar').style.width = data.gamingPercent + '%';
-                legendItems[1].querySelector('.dl-pct').textContent = data.browsingPercent.toFixed(0) + '%';
-                legendItems[1].querySelector('.dl-bar').style.width = data.browsingPercent + '%';
-                legendItems[2].querySelector('.dl-pct').textContent = data.printingPercent.toFixed(0) + '%';
-                legendItems[2].querySelector('.dl-bar').style.width = data.printingPercent + '%';
-            }
-            
-            const circumference = 2 * Math.PI * 50;
-            const gamingDash = (data.gamingPercent / 100) * circumference;
-            const browsingDash = (data.browsingPercent / 100) * circumference;
-            const printingDash = (data.printingPercent / 100) * circumference;
-            
-            const donutSegments = document.querySelectorAll('.donut-svg circle');
-            if (donutSegments.length >= 4) {
-                donutSegments[1].setAttribute('stroke-dasharray', `${gamingDash} ${circumference - gamingDash}`);
-                donutSegments[2].setAttribute('stroke-dasharray', `${browsingDash} ${circumference - browsingDash}`);
-                donutSegments[2].setAttribute('stroke-dashoffset', -gamingDash);
-                donutSegments[3].setAttribute('stroke-dasharray', `${printingDash} ${circumference - printingDash}`);
-                donutSegments[3].setAttribute('stroke-dashoffset', -(gamingDash + browsingDash));
-            }
-            
-            // Update weekly chart
-            weeklyChart.data.datasets[0].data = data.weeklyEarnings;
-            weeklyChart.data.labels = data.weeklyLabels;
-            weeklyChart.update();
-            
-            console.log('Dashboard refreshed:', result.timestamp);
-        }
-    } catch (error) {
-        console.error('Error fetching real-time data:', error);
-    }
-}
+                @empty
+                    <div style="grid-column: 1 / -1; text-align: center; color: var(--neutral-400); padding: 24px 0;">
+                        No PC terminals configured yet.
+                    </div>
+                @endforelse
+            </div>
+        </div>
 
-// Auto-refresh every 10 seconds
-setInterval(fetchRealtimeData, 10000);
+        <!-- ACTIVITY FEED -->
+        <div class="card">
+            <div class="card-header-flex">
+                <h3>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span>Recent System Activity</span>
+                </h3>
+            </div>
 
-// Initial data load
-fetchRealtimeData();
-
-// ── Fetch Dashboard Dataset ──
-async function fetchDataset() {
-    try {
-        const response = await fetch('{{ route("dashboard.dataset") }}');
-        const result = await response.json();
-        
-        if (result.success) {
-            const data = result.data;
-            
-            // Update dataset fields
-            document.getElementById('totalPcUnits').textContent = data.total_pc_units;
-            document.getElementById('activePcUnits').textContent = data.active_pc_units;
-            document.getElementById('availablePcUnits').textContent = data.available_pc_units;
-            document.getElementById('totalSessionsToday').textContent = data.total_sessions_today;
-            document.getElementById('coinsInsertedToday').textContent = '₱' + data.coins_inserted_today.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            
-            // Update system status with styling
-            const systemStatusEl = document.getElementById('systemStatus');
-            const systemStatusText = document.getElementById('systemStatusText');
-            const systemStatusIcon = document.getElementById('systemStatusIcon');
-            
-            const statusConfig = {
-                'optimal': { color: '#00e676', text: 'All systems operational', icon: '✅' },
-                'operational': { color: '#00c8ff', text: 'System operational', icon: '🟢' },
-                'degraded': { color: '#ffb400', text: 'System degraded', icon: '⚠️' },
-                'offline': { color: '#ff4444', text: 'System offline', icon: '🔴' }
-            };
-            
-            const status = statusConfig[data.system_status] || statusConfig['operational'];
-            systemStatusEl.textContent = data.system_status.toUpperCase();
-            systemStatusEl.style.color = status.color;
-            systemStatusText.textContent = status.text;
-            systemStatusText.style.color = status.color;
-            systemStatusIcon.textContent = status.icon;
-            
-            // Update sessions change
-            const sessionsChangeText = document.getElementById('sessionsChangeText');
-            if (data.sessions_change !== 0) {
-                const changeSymbol = data.sessions_change >= 0 ? '▲' : '▼';
-                sessionsChangeText.textContent = changeSymbol + ' ' + Math.abs(data.sessions_change).toFixed(1) + '% vs yesterday';
-                sessionsChangeText.className = data.sessions_change >= 0 ? 'up' : 'down';
-            } else {
-                sessionsChangeText.textContent = 'No change from yesterday';
-            }
-            
-            console.log('Dataset refreshed:', result.timestamp);
-        }
-    } catch (error) {
-        console.error('Error fetching dataset:', error);
-    }
-}
-
-// Auto-refresh dataset every 30 seconds
-setInterval(fetchDataset, 30000);
-
-// Initial dataset load
-fetchDataset();
-
-// ── Machine Grid (Real Data from Controller) ──
-const icons = {busy:'🟡',online:'🟢',offline:'⚫',error:'🔴'};
-const machines = @json($machines);
-const grid = document.getElementById('machineGrid');
-machines.forEach(m => {
-  grid.innerHTML += `
-  <div class="machine ${m.status}">
-    <div class="machine-icon">${icons[m.status]}</div>
-    <div class="machine-id">${m.id}</div>
-    <div class="machine-time">${m.time}</div>
-    <div class="machine-status">${m.status.toUpperCase()}</div>
-  </div>`;
-});
-
-// ── Activity Feed (Real Data from Controller) ──
-// Already populated via Blade template, JS updates for real-time refresh only
-const activities = @json($activities);
-
-// ── Transactions (Real Data from Controller) ──
-// Already populated via Blade template, JS updates for real-time refresh only
-const txnsData = @json($recentTransactions);
-
-// ── Revenue Breakdown (Real Data from Controller) ──
-const totalToday = {{ $totalTodayEarnings }};
-const gamingPercent = {{ $gamingPercent }};
-const browsingPercent = {{ $browsingPercent }};
-const printingPercent = {{ $printingPercent }};
-
-// Update donut center text
-document.querySelector('.donut-center').textContent = '₱' + totalToday.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-// Update legend percentages
-const legendItems = document.querySelectorAll('.dl-item');
-if (legendItems.length >= 3) {
-    legendItems[0].querySelector('.dl-pct').textContent = gamingPercent.toFixed(0) + '%';
-    legendItems[0].querySelector('.dl-bar').style.width = gamingPercent + '%';
-    legendItems[1].querySelector('.dl-pct').textContent = browsingPercent.toFixed(0) + '%';
-    legendItems[1].querySelector('.dl-bar').style.width = browsingPercent + '%';
-    legendItems[2].querySelector('.dl-pct').textContent = printingPercent.toFixed(0) + '%';
-    legendItems[2].querySelector('.dl-bar').style.width = printingPercent + '%';
-}
-
-// Update donut chart segments
-const circumference = 2 * Math.PI * 50; // 314.159
-const gamingDash = (gamingPercent / 100) * circumference;
-const browsingDash = (browsingPercent / 100) * circumference;
-const printingDash = (printingPercent / 100) * circumference;
-
-const donutSegments = document.querySelectorAll('.donut-svg circle');
-if (donutSegments.length >= 4) {
-    donutSegments[1].setAttribute('stroke-dasharray', `${gamingDash} ${circumference - gamingDash}`);
-    donutSegments[2].setAttribute('stroke-dasharray', `${browsingDash} ${circumference - browsingDash}`);
-    donutSegments[2].setAttribute('stroke-dashoffset', -gamingDash);
-    donutSegments[3].setAttribute('stroke-dasharray', `${printingDash} ${circumference - printingDash}`);
-    donutSegments[3].setAttribute('stroke-dashoffset', -(gamingDash + browsingDash));
-}
-
-// ── Tick active timers ──
-setInterval(() => {
-  document.querySelectorAll('.machine.busy .machine-time, .machine.online .machine-time').forEach(el => {
-    const t = el.textContent;
-    if (!t.includes(':') || t === '--:--') return;
-    let [m,s] = t.split(':').map(Number);
-    s++;
-    if(s>=60){s=0;m++;}
-    if(m>=60)m=0;
-    el.textContent = `${m}:${String(s).padStart(2,'0')}`;
-  });
-}, 1000);
-</script>
+            <div class="activity-feed">
+                @forelse($activities as $activity)
+                    <div class="activity-item">
+                        <span class="activity-dot" style="background: var(--primary);"></span>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ $activity['title'] }}</div>
+                            <div class="activity-sub">{{ $activity['sub'] }}</div>
+                        </div>
+                        <div class="activity-time">{{ $activity['time'] }}</div>
+                    </div>
+                @empty
+                    <div style="text-align: center; color: var(--neutral-400); padding: 20px 0;">
+                        No recent activity logged.
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('weeklyRevenueChart');
+        if (ctx && typeof Chart !== 'undefined') {
+            const labels = @json($weeklyLabels ?? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+            const data = @json($weeklyEarnings ?? [0, 0, 0, 0, 0, 0, 0]);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Gross Income (₱)',
+                        data: data,
+                        borderColor: '#1E3A8A',
+                        backgroundColor: 'rgba(30, 58, 138, 0.08)',
+                        borderWidth: 2.5,
+                        tension: 0.35,
+                        fill: true,
+                        pointBackgroundColor: '#1E3A8A',
+                        pointBorderColor: '#FFFFFF',
+                        pointBorderWidth: 2,
+                        pointRadius: 4.5,
+                        pointHoverRadius: 6.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#0F172A',
+                            titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: 'bold' },
+                            bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13 },
+                            padding: 10,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ₱' + context.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#64748B',
+                                font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: '500' }
+                            }
+                        },
+                        y: {
+                            border: { dash: [4, 4] },
+                            grid: { color: '#F1F5F9' },
+                            ticks: {
+                                color: '#64748B',
+                                font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 },
+                                callback: function(value) {
+                                    return '₱' + value;
+                                }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+@endpush
