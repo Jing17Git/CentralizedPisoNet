@@ -95,6 +95,35 @@ class SessionController extends Controller
     }
 
     /**
+     * Destroy/End session (DELETE method).
+     */
+    public function destroy(Session $session)
+    {
+        try {
+            if ($session->status === 'Active') {
+                // End the session
+                $session->update([
+                    'end_time' => Carbon::now(),
+                    'status' => 'Ended',
+                    'remaining_time' => 0
+                ]);
+                
+                // Close coin slot for this machine
+                $machine = \App\Models\Machine::where('machine_code', $session->pc_unit_number)->first();
+                if ($machine) {
+                    $machine->update(['slot_enabled' => 0]);
+                }
+            }
+
+            return redirect()->route('sessions.index')
+                ->with('success', 'Session ended successfully!');
+        } catch (\Exception $e) {
+            return redirect()->route('sessions.index')
+                ->with('error', 'Error ending session: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * End session by ID (alternative route).
      */
     public function endSessionById($sessionId)

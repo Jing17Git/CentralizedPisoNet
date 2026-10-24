@@ -1,299 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login - PisoNet Central</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — PisoNet Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep:  #0D1117;
+            --bg-card:  #161B22;
+            --border:   #30363D;
+            --accent:   #58A6FF;
+            --text:     #E6EDF3;
+            --text-muted: #8B949E;
+            --danger:   #F85149;
+        }
 
-  :root {
-    --bg-deep:     #040c18;
-    --bg-mid:      #071425;
-    --neon:        #00c8ff;
-    --neon2:       #0077ff;
-    --neon-glow:   0 0 18px #00c8ff88, 0 0 40px #0077ff44;
-    --accent-teal: #00ffcc;
-    --text-hi:     #e8f4ff;
-    --text-mid:    #7fa8c9;
-    --text-lo:     #3a5570;
-    --border:      rgba(0,200,255,0.12);
-    --glass:       rgba(0,180,255,0.06);
-    --radius:      14px;
-  }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-  html, body { height: 100%; }
-  body {
-    font-family: 'Syne', sans-serif;
-    background: var(--bg-deep);
-    color: var(--text-hi);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-  /* Background mesh */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 15% 10%,  rgba(0,120,255,0.14) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 85% 80%,  rgba(0,200,255,0.10) 0%, transparent 60%),
-      radial-gradient(ellipse 40% 40% at 50% 50%,  rgba(0,50,120,0.18) 0%, transparent 70%);
-    pointer-events: none; z-index: 0;
-  }
+        .auth-wrap {
+            width: 100%;
+            max-width: 380px;
+            padding: 20px;
+        }
 
-  /* Grid scan-line overlay */
-  body::after {
-    content: '';
-    position: fixed; inset: 0;
-    background-image:
-      linear-gradient(rgba(0,200,255,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,200,255,0.025) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none; z-index: 0;
-  }
+        .auth-brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
 
-  .login-container {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 420px;
-    padding: 20px;
-  }
+        .auth-brand .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin: 0 auto 12px;
+        }
 
-  .login-card {
-    background: rgba(6, 22, 44, 0.72);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    backdrop-filter: blur(18px);
-    padding: 40px 36px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
+        .auth-brand h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+        }
 
-  .login-header {
-    text-align: center;
-    margin-bottom: 36px;
-  }
+        .auth-brand p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
 
-  .brand-icon {
-    width: 56px; height: 56px;
-    background: linear-gradient(135deg, var(--neon2), var(--neon));
-    border-radius: 14px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 28px;
-    box-shadow: var(--neon-glow);
-    margin-bottom: 16px;
-  }
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 28px;
+        }
 
-  .brand-name {
-    font-size: 24px; font-weight: 800; color: var(--text-hi);
-    letter-spacing: 0.5px; margin-bottom: 4px;
-  }
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 6px;
+        }
 
-  .brand-sub {
-    font-size: 12px; color: var(--neon);
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 2px;
-  }
+        input {
+            width: 100%;
+            background: var(--bg-deep);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 9px 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .15s;
+        }
 
-  .form-group {
-    margin-bottom: 20px;
-  }
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(88,166,255,.1);
+        }
 
-  .form-label {
-    display: block;
-    font-size: 11px;
-    color: var(--text-mid);
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
+        .field-error {
+            display: block;
+            color: var(--danger);
+            font-size: 11px;
+            margin-top: -12px;
+            margin-bottom: 12px;
+        }
 
-  .form-input {
-    width: 100%;
-    padding: 14px 16px;
-    background: var(--glass);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text-hi);
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: all .2s ease;
-  }
+        button[type="submit"] {
+            width: 100%;
+            background: var(--accent);
+            color: #0D1117;
+            border: none;
+            padding: 11px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity .15s;
+            margin-top: 4px;
+        }
 
-  .form-input:focus {
-    border-color: var(--neon);
-    box-shadow: 0 0 12px rgba(0,200,255,0.2);
-  }
+        button[type="submit"]:hover { opacity: .88; }
 
-  .form-input::placeholder {
-    color: var(--text-lo);
-  }
+        .auth-footer {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
 
-  .btn-login {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, var(--neon2), var(--neon));
-    border: none;
-    border-radius: 10px;
-    color: var(--bg-deep);
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all .2s ease;
-    box-shadow: var(--neon-glow);
-    margin-top: 10px;
-  }
+        .auth-footer a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
 
-  .btn-login:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 24px rgba(0,200,255,0.5);
-  }
-
-  .alert {
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    font-size: 13px;
-  }
-
-  .alert-success {
-    background: rgba(0,230,118,0.15);
-    border: 1px solid rgba(0,230,118,0.3);
-    color: #00e676;
-  }
-
-  .alert-error {
-    background: rgba(255,59,107,0.15);
-    border: 1px solid rgba(255,59,107,0.3);
-    color: #ff3b6b;
-  }
-
-  .error-message {
-    color: #ff3b6b;
-    font-size: 12px;
-    margin-top: 6px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .demo-accounts {
-    margin-top: 28px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
-  }
-
-  .demo-title {
-    font-size: 10px;
-    color: var(--text-lo);
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    text-align: center;
-    margin-bottom: 14px;
-  }
-
-  .demo-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background: var(--glass);
-    border-radius: 8px;
-    margin-bottom: 8px;
-    font-size: 12px;
-  }
-
-  .demo-role {
-    color: var(--neon);
-    font-weight: 600;
-  }
-
-  .demo-email {
-    color: var(--text-mid);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-  }
-
-  .demo-pass {
-    color: var(--text-mid);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-  }
-</style>
+        .auth-footer a:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
-
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
-      <div class="brand-icon">🖥</div>
-      <div class="brand-name">PisoNet</div>
-      <div class="brand-sub">CENTRAL LOGIN</div>
+<div class="auth-wrap">
+    <div class="auth-brand">
+        <div class="brand-icon">⚡</div>
+        <h1>PisoNet Admin</h1>
+        <p>Sign in to your admin panel</p>
     </div>
 
-    @if(session('success'))
-      <div class="alert alert-success">
-        {{ session('success') }}
-      </div>
-    @endif
+    <div class="auth-card">
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email">
+            @error('email') <span class="field-error">{{ $message }}</span> @enderror
 
-    @if(session('error'))
-      <div class="alert alert-error">
-        {{ session('error') }}
-      </div>
-    @endif
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required autocomplete="current-password">
+            @error('password') <span class="field-error">{{ $message }}</span> @enderror
 
-    <form method="POST" action="{{ route('login') }}">
-      @csrf
-
-      <div class="form-group">
-        <label class="form-label" for="email">Email Address</label>
-        <input 
-          type="email" 
-          id="email" 
-          name="email" 
-          class="form-input" 
-          placeholder="Enter your email"
-          value="{{ old('email') }}"
-          required
-        >
-        @error('email')
-          <div class="error-message">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="password">Password</label>
-        <input 
-          type="password" 
-          id="password" 
-          name="password" 
-          class="form-input" 
-          placeholder="Enter your password"
-          required
-        >
-        @error('password')
-          <div class="error-message">{{ $message }}</div>
-        @enderror
-      </div>
-
-      <button type="submit" class="btn-login">SIGN IN</button>
-    </form>
-
-    <div class="login-link" style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-mid);">
-      Don't have an account? <a href="{{ route('register') }}" style="color: var(--neon); text-decoration: none; font-weight: 600;">Register</a>
+            <button type="submit" id="login-submit-btn">Sign In</button>
+        </form>
     </div>
 
-  </div>
+    <div class="auth-footer">
+        Don't have an account? <a href="{{ route('register') }}">Create one</a>
+    </div>
 </div>
-
 </body>
 </html>
-

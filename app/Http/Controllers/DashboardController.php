@@ -218,58 +218,64 @@ class DashboardController extends Controller
      */
     private function generateMachineStatuses(array $activeTerminals): array
     {
-        // Get all PC Units from database
-        $pcUnits = PcUnit::orderBy('pc_number', 'asc')->get();
+        // Get all machines from database (these are the actual PCs with coin slots)
+        $machines = \App\Models\Machine::orderBy('machine_code', 'asc')->get();
         
-        // If no PC units in database, return empty array
-        if ($pcUnits->isEmpty()) {
+        // If no machines in database, return empty array
+        if ($machines->isEmpty()) {
             return [];
         }
         
         // Get active sessions to determine which PCs are in use
         $activeSessions = Session::where('status', 'Active')
             ->get()
-            ->keyBy('pc_unit_number');
+            ->keyBy(function($session) {
+                // Extract PC number from machine_code (PC-01 -> 1)
+                if (preg_match('/PC-(\d+)/', $session->pc_unit_number, $matches)) {
+                    return (int)$matches[1];
+                }
+                return $session->pc_unit_number;
+            });
         
-        $machines = [];
+        $result = [];
         
-        foreach ($pcUnits as $pc) {
-            $pcNumber = $pc->pc_number;
-            $pcNumberFormatted = 'PC-' . str_pad($pcNumber, 2, '0', STR_PAD_LEFT);
+        foreach ($machines as $machine) {
+            $machineCode = $machine->machine_code; // e.g., "PC-01"
             
-            // Check if PC has an active session
+            // Extract PC number for session lookup
+            $pcNumber = null;
+            if (preg_match('/PC-(\d+)/', $machineCode, $matches)) {
+                $pcNumber = (int)$matches[1];
+            }
+            
+            // Check if machine has an active session
             $activeSession = $activeSessions->get($pcNumber);
             
             if ($activeSession) {
-                // PC is in use
+                // Machine is BUSY - has active session
                 $status = 'busy';
-                // Calculate elapsed time
-                $startTime = Carbon::parse($activeSession->start_time);
+                $startTime = \Carbon\Carbon::parse($activeSession->start_time);
                 $elapsedMinutes = $startTime->diffInMinutes(now());
                 $remainingMinutes = $activeSession->remaining_time ?? 0;
                 $time = $elapsedMinutes . ':' . str_pad(($remainingMinutes % 60), 2, '0', STR_PAD_LEFT);
-            } elseif ($pc->is_active && $pc->status === 'available') {
-                // PC is available and active
+            } elseif ($machine->status === 'online') {
+                // Machine is ONLINE - heartbeat received, no active session
                 $status = 'online';
                 $time = '--:--';
-            } elseif (!$pc->is_active) {
-                // PC is inactive
+            } else {
+                // Machine is OFFLINE - no heartbeat
                 $status = 'offline';
                 $time = '--:--';
-            } else {
-                // PC is active but not available (maybe in use without session tracking)
-                $status = 'busy';
-                $time = '00:00';
             }
             
-            $machines[] = [
-                'id' => $pcNumberFormatted,
+            $result[] = [
+                'id' => $machineCode,
                 'status' => $status,
                 'time' => $time
             ];
         }
         
-        return $machines;
+        return $result;
     }
 
     /**

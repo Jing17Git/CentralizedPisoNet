@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'api.token' => \App\Http\Middleware\ApiTokenMiddleware::class,
         ]);
+        
+        $middleware->validateCsrfTokens(except: [
+            'coin-test/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

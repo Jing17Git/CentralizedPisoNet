@@ -83,9 +83,10 @@ class MachineApiController extends Controller
             ], 404);
         }
         
-        // Update last_seen timestamp
+        // Update last_heartbeat timestamp and set status to online
         $machine->update([
             'status' => 'online',
+            'last_heartbeat' => now(),
             'updated_at' => now()
         ]);
         

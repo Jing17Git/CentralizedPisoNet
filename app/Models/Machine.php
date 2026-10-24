@@ -11,7 +11,8 @@ class Machine extends Model
         'machine_code',
         'ip_address',
         'location',
-        'status'
+        'status',
+        'slot_enabled'
     ];
 
     public function sessions()

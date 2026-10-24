@@ -4,48 +4,105 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PcUnit;
+use App\Models\Session;
+use App\Models\Machine;
+use App\Models\CoinTransaction;
 use Carbon\Carbon;
 
 class PcUnitController extends Controller
 {
-    /**
-     * Display a listing of the PC units.
-     */
     public function index(Request $request)
     {
-        $query = PcUnit::query();
+        // Get all machines (actual PCs with coin slots)
+        $machines = Machine::orderBy('machine_code')->get();
 
-        // Search functionality
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('pc_number', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%");
-            });
+        // Active sessions keyed by pc_unit_number
+        $sessions = Session::where('status', 'Active')
+            ->get()
+            ->keyBy('pc_unit_number');
+
+        // Recent session history per PC (last 5)
+        $histories = Session::orderByDesc('start_time')
+            ->get()
+            ->groupBy('pc_unit_number')
+            ->map(fn($s) => $s->take(5));
+
+        // Today's coin transactions per machine
+        $allTodayCoins = CoinTransaction::whereDate('created_at', today())->get();
+        $todayCoins = [];
+        foreach ($machines as $machine) {
+            $todayCoins[$machine->id] = $allTodayCoins->where('machine_id', $machine->id);
         }
 
-        // Filter by status
-        if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
+        // Calculate stats
+        $onlineCount = 0;
+        $busyCount = 0;
+        $offlineCount = 0;
+
+        foreach ($machines as $machine) {
+            $pcNumber = (int) str_replace('PC-', '', $machine->machine_code);
+            $hasSession = isset($sessions[$pcNumber]);
+            
+            if ($hasSession) {
+                $busyCount++;
+            } elseif ($machine->status === 'online') {
+                $onlineCount++;
+            } else {
+                $offlineCount++;
+            }
         }
 
-        // Filter by active status
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->is_active === '1');
-        }
-
-        $pcUnits = $query->orderBy('pc_number', 'asc')->get();
-
-        // Statistics
         $stats = [
-            'total' => PcUnit::count(),
-            'active' => PcUnit::where('is_active', true)->count(),
-            'available' => PcUnit::where('status', 'available')->count(),
-            'in_use' => PcUnit::where('status', 'in_use')->count(),
-            'offline' => PcUnit::where('status', 'offline')->count(),
+            'total' => $machines->count(),
+            'online' => $onlineCount,
+            'busy' => $busyCount,
+            'offline' => $offlineCount,
         ];
 
-        return view('pcunits.index', compact('pcUnits', 'stats'));
+        return view('pcunits.index', compact('machines', 'stats', 'sessions', 'histories', 'todayCoins'));
+    }
+
+    /**
+     * API endpoint for real-time PC status updates
+     */
+    public function realtimeStatus(Request $request)
+    {
+        $machines = Machine::orderBy('machine_code')->get();
+        $sessions = Session::where('status', 'Active')->get()->keyBy('pc_unit_number');
+        $allTodayCoins = CoinTransaction::whereDate('created_at', today())->get();
+
+        $data = [];
+        foreach ($machines as $machine) {
+            $pcNumber = (int) str_replace('PC-', '', $machine->machine_code);
+            $session = $sessions->get($pcNumber);
+            $todayCoins = $allTodayCoins->where('machine_id', $machine->id);
+
+            $status = 'offline';
+            $remainingTime = null;
+
+            if ($session) {
+                $status = 'busy';
+                $remainingTime = $session->remaining_time;
+            } elseif ($machine->status === 'online') {
+                $status = 'online';
+            }
+
+            $data[] = [
+                'machine_code' => $machine->machine_code,
+                'status' => $status,
+                'remaining_time' => $remainingTime,
+                'last_heartbeat' => $machine->last_heartbeat?->diffForHumans(),
+                'coins_today' => $todayCoins->sum('coins_inserted'),
+                'minutes_today' => $todayCoins->sum('minutes_purchased'),
+                'earned_today' => $todayCoins->sum('amount'),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+            'timestamp' => now()->toIso8601String()
+        ]);
     }
 
     /**
@@ -66,7 +123,7 @@ class PcUnitController extends Controller
 
         PcUnit::create($validated);
 
-        return redirect()->route('pcunits.index')
+        return redirect()->route('pc-units.index')
             ->with('success', 'PC Unit added successfully!');
     }
 
@@ -84,7 +141,7 @@ class PcUnitController extends Controller
 
         $pcUnit->update($validated);
 
-        return redirect()->route('pcunits.index')
+        return redirect()->route('pc-units.index')
             ->with('success', 'PC Unit updated successfully!');
     }
 
@@ -95,7 +152,7 @@ class PcUnitController extends Controller
     {
         $pcUnit->delete();
 
-        return redirect()->route('pcunits.index')
+        return redirect()->route('pc-units.index')
             ->with('success', 'PC Unit deleted successfully!');
     }
 
@@ -108,7 +165,7 @@ class PcUnitController extends Controller
 
         $status = $pcUnit->is_active ? 'activated' : 'deactivated';
 
-        return redirect()->route('pcunits.index')
+        return redirect()->route('pc-units.index')
             ->with('success', "PC Unit {$status} successfully!");
     }
 
@@ -126,8 +183,7 @@ class PcUnitController extends Controller
             'last_activity' => $validated['status'] === 'in_use' ? Carbon::now() : $pcUnit->last_activity,
         ]);
 
-        return redirect()->route('pcunits.index')
+        return redirect()->route('pc-units.index')
             ->with('success', 'PC Unit status updated successfully!');
     }
 }
-
